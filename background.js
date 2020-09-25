@@ -32,8 +32,12 @@ var logData = [];
 function onEvent(debuggeeId, message, params) {
     if (gTabId != debuggeeId.tabId)
         return;
-
-    logData.push(params)
+    if (message === 'Runtime.consoleAPICalled') {
+        logData.push({
+            ...params,
+            stackTrace: undefined,
+        });
+    }
 }
 
 function onAttach(tabId) {
@@ -43,7 +47,7 @@ function onAttach(tabId) {
     }
 
     // use Log.enable and go from there
-    chrome.debugger.sendCommand({ tabId: tabId }, "Log.enable");
+    chrome.debugger.sendCommand({ tabId: tabId }, "Runtime.enable");
     chrome.debugger.onEvent.addListener(onEvent);
 
     setTimeout(() => {
@@ -56,7 +60,7 @@ function onAttach(tabId) {
         });
 
         // cleanup after downloading file
-        chrome.debugger.sendCommand({ tabId: tabId }, "Log.disable");
+        chrome.debugger.sendCommand({ tabId: tabId }, "Runtime.disable");
         chrome.debugger.detach({ tabId: tabId });
         gTabId = undefined;
         logData = [];
